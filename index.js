@@ -1,11 +1,14 @@
 /* eslint-disable quotes */
 /* eslint-disable prefer-arrow-callback */
-/* eslint-disable func-names */
 import puppeteer from 'puppeteer-extra';
 import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import chalk from 'chalk';
 import { url } from './src/constants/app.constants';
 import { wait } from './src/util/poll';
+
+import Discord from './src/discord/index';
+
+const discordCLient = new Discord();
 
 /**
  * Goes to designated URL and finds item availability
@@ -19,7 +22,7 @@ async function getAvailability(page) {
   console.log(chalk.blue('waiting for browser requests...'));
   await wait(6000);
 
-  const results = await page.$eval('html', function (html) {
+  const results = await page.$eval('html', (html) => {
     let currentAvailability;
 
     // GAMESTOP ELEMENT: const available = html.querySelector(`[class^='condition-label new`);
@@ -30,6 +33,7 @@ async function getAvailability(page) {
     } else {
       currentAvailability = 'Available Now 😁';
     }
+
     console.log(currentAvailability);
     return currentAvailability;
   });
@@ -37,7 +41,10 @@ async function getAvailability(page) {
   return results;
 }
 
-(async () => {
+/**
+ * Initializes uppeteer bot
+ */
+async function startBot() {
   // If you want to see the scraping in real time, change `headless` to false
   const browser = await puppeteer.launch({
     headless: false
@@ -93,11 +100,12 @@ async function getAvailability(page) {
     console.log(chalk.blue.underline('waiting for result...'));
     // eslint-disable-next-line no-await-in-loop
     result = await getAvailability(page);
+    discordCLient.sendMessage(result);
   }
 
   console.log(chalk.cyanBright.underline.bold(result));
 
-  // TODO: code to send message to discord
-
   browser.close();
-})();
+}
+
+startBot();
