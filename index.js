@@ -1,11 +1,11 @@
-/* eslint-disable import/no-unresolved */
 /* eslint-disable quotes */
 /* eslint-disable prefer-arrow-callback */
 /* eslint-disable func-names */
 import puppeteer from 'puppeteer-extra';
 import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import chalk from 'chalk';
-import { poll, wait } from './poll';
+import { url } from './src/constants/app.constants';
+import { wait } from './src/util/poll';
 
 /**
  * Goes to designated URL and finds item availability
@@ -13,28 +13,24 @@ import { poll, wait } from './poll';
  * @returns
  */
 async function getAvailability(page) {
-  await page.goto(
-    `https://www.gamestop.com/consoles-hardware/nintendo-switch/consoles/products/nintendo-switch-oled-console-white-joy-con/299009.html`
-  );
+  await page.goto(url);
 
   // This can be tweaked. This is the time we allow the browser to wait for a request
   console.log(chalk.blue('waiting for browser requests...'));
   await wait(6000);
 
-  // console.log(chalk.blueBright('scrolling initiated to load all data...'));
-  // await autoScroll(page);
-
   const results = await page.$eval('html', function (html) {
     let currentAvailability;
 
-    const available = html.querySelector(`[class^='condition-label new`);
+    // GAMESTOP ELEMENT: const available = html.querySelector(`[class^='condition-label new`);
+    const available = html.querySelector(`[class^='fulfillment-add-to-cart-button`).innerText.trim() === 'Add to Cart' ? true : null;
 
     if (!available) {
       currentAvailability = 'Not Available 😭';
     } else {
       currentAvailability = 'Available Now 😁';
     }
-
+    console.log(currentAvailability);
     return currentAvailability;
   });
 
@@ -99,34 +95,9 @@ async function getAvailability(page) {
     result = await getAvailability(page);
   }
 
-  console.log(chalk.yellow.underline.bold(result));
+  console.log(chalk.cyanBright.underline.bold(result));
 
   // TODO: code to send message to discord
 
   browser.close();
 })();
-
-/**
- * used for sites that load on scroll
- * @param {current browser page} page
- */
-async function autoScroll(page) {
-  await page.evaluate(async () => {
-    await new Promise((resolve, reject) => {
-      let totalHeight = 0;
-      const distance = 100;
-      const timer = setInterval(() => {
-        const { scrollHeight } = document.body;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
-
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
-          resolve();
-        }
-        // This can be tweaked. This is the time between each "scroll" that takes place.
-        // If this is too fast, the data on the page might not load quick enough
-      }, 1500);
-    });
-  });
-}
