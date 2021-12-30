@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { Client, Intents } from 'discord.js';
-import { discordChannel } from '../constants/app.constants';
+import { discordChannel, url } from '../constants/app.constants';
+import { messageEmbed } from './message-embed';
 
 dotenv.config({ path: '../../.env' });
 
@@ -12,6 +13,17 @@ export default class Discord {
   }
 
   sendMessage(message) {
-    this.client.channels.cache.get(discordChannel).send(message);
+    const {
+      productTitle,
+      currentAvailability,
+      imageUrl
+    } = message;
+
+    messageEmbed.title = productTitle;
+    messageEmbed.url = url;
+    messageEmbed.image.url = imageUrl;
+    messageEmbed.description = currentAvailability;
+
+    this.client.channels.cache.get(discordChannel).send({ embeds: [messageEmbed] });
   }
 }

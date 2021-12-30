@@ -26,16 +26,16 @@ async function getAvailability(page) {
     let currentAvailability;
 
     // GAMESTOP ELEMENT: const available = html.querySelector(`[class^='condition-label new`);
+    const productTitle = html.querySelector(`[class^='heading-5 v-fw-regular`).innerText.trim();
     const available = html.querySelector(`[class^='fulfillment-add-to-cart-button`).innerText.trim() === 'Add to Cart' ? true : null;
-
+    const imageUrl = html.querySelector(`[class^='primary-image`).getAttribute('src');
     if (!available) {
       currentAvailability = 'Not Available 😭';
     } else {
       currentAvailability = 'Available Now 😁';
     }
 
-    console.log(currentAvailability);
-    return currentAvailability;
+    return { productTitle, currentAvailability, imageUrl };
   });
 
   return results;
@@ -90,6 +90,13 @@ async function startBot() {
       chalk.magenta(`${request.failure().errorText} ${request.url()}`)
     ));
 
+  /* result shape
+    {
+      productTitle,
+      currentAvailability,
+      imageUrl
+    }
+  */
   let result;
 
   console.log(chalk.blue.underline('entering loop'));
@@ -100,6 +107,7 @@ async function startBot() {
     console.log(chalk.blue.underline('waiting for result...'));
     // eslint-disable-next-line no-await-in-loop
     result = await getAvailability(page);
+
     discordCLient.sendMessage(result);
   }
 
