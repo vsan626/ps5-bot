@@ -13,10 +13,10 @@ const discordCLient = new Discord();
 /**
  * Goes to designated URL and finds item availability
  * @param {current webpage} page
- * @returns
+ * @returns obj { productTitle, currentAvailability, imageUrl }
  */
 async function getAvailability(page) {
-  await page.goto(url);
+  await page.goto(url, { waitUntil: 'load', timeout: 0 });
 
   // This can be tweaked. This is the time we allow the browser to wait for a request
   console.log(chalk.blue('waiting for browser requests...'));
@@ -29,6 +29,7 @@ async function getAvailability(page) {
     const productTitle = html.querySelector(`[class^='heading-5 v-fw-regular`).innerText.trim();
     const available = html.querySelector(`[class^='fulfillment-add-to-cart-button`).innerText.trim() === 'Add to Cart' ? true : null;
     const imageUrl = html.querySelector(`[class^='primary-image`).getAttribute('src');
+
     if (!available) {
       currentAvailability = 'Not Available 😭';
     } else {
@@ -42,12 +43,12 @@ async function getAvailability(page) {
 }
 
 /**
- * Initializes uppeteer bot
+ * Initializes puppeteer bot
  */
 async function startBot() {
   // If you want to see the scraping in real time, change `headless` to false
   const browser = await puppeteer.launch({
-    headless: false
+    headless: true
   });
   const page = await browser.newPage();
 
@@ -90,13 +91,6 @@ async function startBot() {
       chalk.magenta(`${request.failure().errorText} ${request.url()}`)
     ));
 
-  /* result shape
-    {
-      productTitle,
-      currentAvailability,
-      imageUrl
-    }
-  */
   let result;
 
   console.log(chalk.blue.underline('entering loop'));
@@ -107,9 +101,9 @@ async function startBot() {
     console.log(chalk.blue.underline('waiting for result...'));
     // eslint-disable-next-line no-await-in-loop
     result = await getAvailability(page);
-
-    discordCLient.sendMessage(result);
+    console.log(chalk.cyanBright.underline.bold(result.currentAvailability));
   }
+  discordCLient.sendMessage(result);
 
   console.log(chalk.cyanBright.underline.bold(result));
 
